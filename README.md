@@ -22,12 +22,13 @@ A two-service application for streaming AI-assisted contract generation:
    LocalStorage (JWT)                                      AI text generation (Gemini)
 ```
 
-### Key Components
+### Architecture
 - **Streaming**: Custom SSE formatting splits multi-line AI output into discrete `data:` events to avoid client loss of content.
 - **Cancellation**: In-memory map of `contract_id` to `asyncio.Event`; DELETE triggers event to abort generation loop.
 - **Resilience**: Section generation wrapped with `tenacity` retries to mitigate transient model errors.
 - **Security**: Stateless JWT auth (register returns token; signout just validates); secrets sourced from env.
 - **Formatting**: Frontend post-process adds line breaks before sub‑clause numbering (e.g. `1.1`, `2.3.1`).
+- **Planner & Writer Agents**: A lightweight *planner* agent first creates the contract title and a structured Table of Contents (the "plan"). Then a *writer* agent is invoked sequentially per section. This avoids a single long prompt that could exceed / approach the model token window, enables partial early delivery (streaming each section), supports cancellation between sections, and isolates retries to only the failed section instead of regenerating the entire contract.
 
 ### Design Tradeoffs & Reasoning
 | Decision | Tradeoff | Rationale |
@@ -38,6 +39,7 @@ A two-service application for streaming AI-assisted contract generation:
 | Gemini direct calls per section | Latency per section | Parallelism avoided to preserve ordering & manage rate limits. |
 | Post-processing clause breaks client-side | Possible mismatch if HTML changes | Avoids extra model tokens / backend parsing complexity. |
 | Alembic + SQLAlchemy even w/out full persistence yet | Some unused scaffolding | Future-proof for storing contracts/users. |
+| Planner + per-section writer | More round trips / latency per section | Prevents max token context blowout, improves resiliency & allows granular retries and cancellation. |
 
 ---
 ## Environment Variables
