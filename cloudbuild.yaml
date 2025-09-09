@@ -22,39 +22,58 @@ steps:
 
   # Deploy container image to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: 'gcloud'
-    args: 
-      - 'run'
-      - 'deploy'
-      - 'firstread-api'
-      - '--image=us-central1-docker.pkg.dev/firstread-471513/my-app-repo/backend:latest'
-      - '--region=us-central1'
-      - '--platform=managed'
-      - '--allow-unauthenticated'
-      - '--timeout=300'
-      - '--cpu=1'
-      - '--set-env-vars'
-      - 'DATABASE_URL=${_DATABASE_URL},GEMINI_API_KEY=${_GEMINI_API_KEY},SECRET_KEY=${_SECRET_KEY},HASH_ALGORITHM=HS256,ACCESS_TOKEN_EXPIRE_MINUTES=30'
+    entrypoint: 'bash'
+    secretEnv:
+      - DATABASE_URL
+      - GEMINI_API_KEY
+      - SECRET_KEY
+    env:
+      - HASH_ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+    args:
+      - '-c'
+      - |
+        gcloud run deploy firstread-api \
+          --image=us-central1-docker.pkg.dev/firstread-471513/my-app-repo/backend:latest \
+          --region=us-central1 \
+          --platform=managed \
+          --allow-unauthenticated \
+          --timeout=300 \
+          --cpu=1 \
+          --set-env-vars=DATABASE_URL=$$DATABASE_URL,GEMINI_API_KEY=$$GEMINI_API_KEY,SECRET_KEY=$$SECRET_KEY,HASH_ALGORITHM=HS256,ACCESS_TOKEN_EXPIRE_MINUTES=30
   
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: 'gcloud'
-    args: 
-      - 'run'
-      - 'deploy'
-      - 'firstread-frontend'
-      - '--image=us-central1-docker.pkg.dev/firstread-471513/my-app-repo/frontend:latest'
-      - '--region=us-central1'
-      - '--platform=managed'
-      - '--allow-unauthenticated'
-      - '--timeout=300'
-      - '--cpu=1'
-      - '--set-env-vars=NEXT_PUBLIC_API_BASE_URL=https://firstread-api-xxxxxx.a.run.app'  # Replace with actual URL after first deployment
+    entrypoint: 'bash'
+    secretEnv:
+      - AUTH_SECRET
+    env:
+      - API_URL=https://firstread-api-314795853881.us-central1.run.app
+      - NEXT_PUBLIC_API_URL=https://firstread-api-314795853881.us-central1.run.app
+      - AUTH_TRUST_HOST=true
+    args:
+      - '-c'
+      - |
+        gcloud run deploy firstread-frontend \
+          --image=us-central1-docker.pkg.dev/firstread-471513/my-app-repo/frontend:latest \
+          --region=us-central1 \
+          --platform=managed \
+          --allow-unauthenticated \
+          --timeout=300 \
+          --cpu=1 \
+          --set-env-vars=AUTH_SECRET=$$AUTH_SECRET,NEXT_PUBLIC_API_URL=$$NEXT_PUBLIC_API_URL,API_URL=$$API_URL,AUTH_TRUST_HOST=$$AUTH_TRUST_HOST
 
 images:
   - 'us-central1-docker.pkg.dev/firstread-471513/my-app-repo/backend:latest'
   - 'us-central1-docker.pkg.dev/firstread-471513/my-app-repo/frontend:latest'
 
-substitutions:
-  _DATABASE_URL: ''  # Set in Cloud Build trigger
-  _GEMINI_API_KEY: ''  # Set in Cloud Build trigger  
-  _SECRET_KEY: ''  # Set in Cloud Build trigger
+availableSecrets:
+  secretManager:
+    - versionName: projects/314795853881/secrets/DATABASE_URL/versions/latest
+      env: DATABASE_URL
+    - versionName: projects/314795853881/secrets/GEMINI_API_KEY/versions/latest
+      env: GEMINI_API_KEY
+    - versionName: projects/314795853881/secrets/SECRET_KEY/versions/latest
+      env: SECRET_KEY
+    - versionName: projects/314795853881/secrets/AUTH_SECRET/versions/latest
+      env: AUTH_SECRET
