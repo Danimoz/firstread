@@ -43,7 +43,7 @@ export async function registerUser(formData: FormData) {
         }
 
         // Both registration and login successful
-        redirect("/")
+        return { redirect: true }
       } catch (signInError) {
         // Registration successful but login failed - user can login manually
         return { success: "Account created successfully! Please sign in." }
@@ -75,10 +75,10 @@ export async function loginUser(formData: FormData) {
     if (result?.error) {
       return { error: "Invalid email or password" }
     }
+
+    return { success: true }
   } catch (error) {
     console.error("Login error:", error)
     return { error: "An unexpected error occurred during login" }
   }
-  
-  redirect("/")
 } 

@@ -8,21 +8,28 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Loading } from "@/components/ui/loading"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { useRouter } from "next/navigation"
 
 export default function Register() {
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
+  const { push } = useRouter()
 
-  async function handleSubmit(formData: FormData) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
     setIsLoading(true)
     setMessage(null)
 
+    const formData = new FormData(event.currentTarget)
     const result = await registerUser(formData)
 
     if (result?.error) {
       setMessage({ type: "error", text: result.error })
     } else if (result?.success) {
       setMessage({ type: "success", text: result.success })
+      push("/login")
+    } else if (result?.redirect) {
+      push("/")
     }
 
     setIsLoading(false)
@@ -47,7 +54,7 @@ export default function Register() {
           </CardHeader>
 
           <CardContent>
-            <form action={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-gray-700 dark:text-gray-300">
                   Email Address

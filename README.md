@@ -53,7 +53,6 @@ SECRET_KEY=your_random_secret
 HASH_ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=60
 ```
-The Postgresql url is postgresql://neondb_owner:npg_fw3XyUKTGn9i@ep-snowy-silence-adqzxyf5-pooler.c-2.us-east-1.aws.neon.tech/neondb
 
 #### Generating `SECRET_KEY`
 Use any sufficiently long random string (32+ bytes). Examples:

@@ -1,21 +1,18 @@
 import { auth } from "@/auth"
-import { NextRequest } from "next/server"
 
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { contractId: string } }
+  request: Request,
+  { params }: { params: Promise<{ contractId: string }> }
 ) {
   const session = await auth()
-
+  const { contractId } = await params
   if (!session) {
-    return new Response("Unauthorized", { status: 401 })
+    return Response.json({"error": "Unauthorized"}, { status: 401 })
   }
 
   try {
-    const { contractId } = params
-
     if (!contractId) {
-      return new Response("Contract ID is required", { status: 400 })
+      return Response.json({"error": "Contract ID is required"}, { status: 400 })
     }
 
     // Forward the request to the backend API
@@ -29,18 +26,15 @@ export async function DELETE(
 
     if (!backendResponse.ok) {
       const errorText = await backendResponse.text()
-      return new Response(errorText, { status: backendResponse.status })
+      return Response.json({"error": errorText}, { status: backendResponse.status })
     }
 
     const result = await backendResponse.json()
-    return new Response(JSON.stringify(result), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json"
-      }
+    return Response.json(result, {
+      status: 200
     })
   } catch (error) {
     console.error("Stop contract error:", error)
-    return new Response("Internal server error", { status: 500 })
+    return Response.json({"error": "Internal server error"}, { status: 500 })
   }
 } 

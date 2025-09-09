@@ -7,6 +7,10 @@ from alembic import context
 from src.core.database import Base
 from src.core.config import settings
 
+# Import all models so Alembic can detect them
+from src.users.models import User
+from src.contract.models import Contract
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, FormEvent } from "react"
 import Link from "next/link"
 import { loginUser } from "@/lib/auth-actions"
 import { Button } from "@/components/ui/button"
@@ -8,21 +8,26 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Loading } from "@/components/ui/loading"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { cn } from "@/lib/utils"
+import { useRouter } from "next/navigation"
 
 export default function Login() {
   const [isLoading, setIsLoading] = useState(false)
+  const { push } = useRouter()
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
 
-  async function handleSubmit(formData: FormData) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
     setIsLoading(true)
     setMessage(null)
 
+    const formData = new FormData(event.currentTarget)
     const result = await loginUser(formData)
 
     if (result?.error) {
       setMessage({ type: "error", text: result.error })
     }
-
+    if (result?.success) push("/")
     setIsLoading(false)
   }
 
@@ -45,7 +50,7 @@ export default function Login() {
           </CardHeader>
 
           <CardContent>
-            <form action={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-gray-700 dark:text-gray-300">
                   Email Address
@@ -86,7 +91,7 @@ export default function Login() {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full h-11 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none"
+                className={cn("w-full h-11 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none")}
               >
                 {isLoading ? (
                   <div className="flex items-center gap-2">
@@ -102,7 +107,7 @@ export default function Login() {
 
           <CardFooter className="justify-center pt-0">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <Link
                 href="/register"
                 className="font-medium text-green-600 hover:text-green-500 dark:text-green-400 dark:hover:text-green-300 transition-colors"

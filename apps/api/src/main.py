@@ -1,5 +1,6 @@
 import logging
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from .users import routes as users_routes
 from .contract import routes as contract_routes
 
@@ -14,6 +15,15 @@ app = FastAPI(
   title="FirstRead Assessment API",
   description="API for the FirstRead assessment",
   version="1.0.0"
+)
+
+# Add CORS middleware
+app.add_middleware(
+  CORSMiddleware,
+  allow_origins=["*"],  # In production, replace with your frontend domain
+  allow_credentials=True,
+  allow_methods=["*"],
+  allow_headers=["*"],
 )
 
 app.include_router(users_routes.router)
